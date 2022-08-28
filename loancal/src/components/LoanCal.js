@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import Typography from "@mui/material/Typography";
 import { styled } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Paper from "@mui/material/Paper";
 import Grid from "@mui/material/Unstable_Grid2";
 import logo from "../assets/vismaLogo.png";
-import SliderField from "./SliderField";
-import LoanType from "./LoanType";
+import LoanAmountSelector from "./LoanAmountSelector";
+import InterestSelector from "./InterestSelector";
 import LoanInfo from "./LoanInfo";
 import Divider from "@mui/material/Divider";
+import LoanLengthSelector from "./LoanLengthSelector";
+import { LoanTypeSelector, loanTypes } from "./LoanTypeSelector";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -17,15 +20,56 @@ const Item = styled(Paper)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
-export default function LoanCal() {
-  const [loanAmount, setloanAmount] = useState();
-  const [paybackTime, setpaybackTime] = useState();
-  const [interest, setInterest] = useState(3);
+const generatePayments = (startDate, loanLength, loanAmount, interest) => {
+  if (!interest || Number.isNaN(interest)) {
+    return [];
+  }
+  const totalMonths = loanLength * 12;
+  const downPaymentPerMonth = loanAmount / totalMonths;
+  const payments = [];
+  let date = new Date(startDate);
+  for (let i = 1; i <= totalMonths; i++) {
+    // TODO: make sure this is correct
+    const interestAmount = ((loanAmount / 100) * interest) / 12;
+    payments.push({
+      date: date.toLocaleDateString(),
+      toPay: (interestAmount + downPaymentPerMonth).toFixed(2),
+      interest: interestAmount.toFixed(2),
+      downpayment: downPaymentPerMonth.toFixed(2),
+      remainingDebt: loanAmount.toFixed(2),
+    });
+    loanAmount -= downPaymentPerMonth;
+    date.setMonth(date.getMonth() + 1);
+  }
+  return payments;
+};
 
+export default function LoanCal() {
+  const [loanType, setLoanType] = useState(Object.keys(loanTypes)[0]);
+  const [startDate, setStartDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
+  const [loanAmount, setLoanAmount] = useState(1000000);
+  const [loanLength, setLoanLength] = useState(25);
+  const [interest, setInterest] = useState(3.5);
+
+  const payments = useMemo(
+    () => generatePayments(startDate, loanLength, loanAmount, interest),
+    [startDate, loanLength, loanAmount, interest]
+  );
+  useEffect(() => {
+    setInterest(loanTypes[loanType].interest);
+  }, [loanType]);
+  console.log(payments);
   return (
-    <React.Fragment>
-      <Box sx={{ flexGrow: 1 }}>
-        <Grid container direction="column">
+    <Grid
+      container
+      direction="column"
+      justifyContent="center"
+      alignItems="center"
+    >
+      <Box sx={{ width: 800 }}>
+        <Grid container direction="column" spacing={3}>
           <Grid xs display="flex" justifyContent="center" alignItems="center">
             <Item>
               <img src={logo} height={50} alt="Visma logo" />
@@ -38,27 +82,42 @@ export default function LoanCal() {
             </Item>
           </Grid>
           <Grid>
-            <LoanType />
+            Loan start date: &nbsp;
+            <input
+              type="date"
+              name="loan-start"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            ></input>
           </Grid>
           <Grid>
-            <LoanType />
+            <LoanTypeSelector setLoanType={setLoanType} loanType={loanType} />
           </Grid>
           <Grid>
-            <SliderField />
+            <LoanAmountSelector
+              setLoanAmount={setLoanAmount}
+              loanAmount={loanAmount}
+            />
+          </Grid>
+          <Grid>
+            <LoanLengthSelector
+              setLoanLength={setLoanLength}
+              loanLength={loanLength}
+            />
+          </Grid>
+          <Grid>
+            <InterestSelector setInterest={setInterest} interest={interest} />
           </Grid>
         </Grid>
-      </Box>
-      <Divider />
-      <Box sx={{ flexGrow: 1 }}>
-        <Grid container direction="row" justifyContent="flex-start">
-          <Item>
-            <h1>Results</h1>
-          </Item>
-          <Item>
-            <LoanInfo />
+        <br />
+        <Divider />
+        <Grid>
+          <Item sx={{ paddingLeft: 0, paddingRight: 0 }}>
+            <Typography variant="h5">Repayment plan</Typography>
+            <LoanInfo payments={payments} />
           </Item>
         </Grid>
       </Box>
-    </React.Fragment>
+    </Grid>
   );
 }
