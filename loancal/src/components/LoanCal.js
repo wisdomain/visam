@@ -28,9 +28,9 @@ const generatePayments = (startDate, loanLength, loanAmount, interest) => {
   const downPaymentPerMonth = loanAmount / totalMonths;
   const payments = [];
   let date = new Date(startDate);
+  const monthlyInterestRate = interest / 1200;
   for (let i = 1; i <= totalMonths; i++) {
-    // TODO: make sure this is correct
-    const interestAmount = ((loanAmount / 100) * interest) / 12;
+    const interestAmount = loanAmount * monthlyInterestRate;
     payments.push({
       date: date.toLocaleDateString(),
       toPay: (interestAmount + downPaymentPerMonth).toFixed(2),
