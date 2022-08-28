@@ -1,0 +1,29 @@
+{
+    "customer": {
+        "id": "random-customer-id"
+    },
+    "loans": [
+        {
+            "id": "random-housing-loan-id",
+            "type": "Hous loan",
+            "start-date": "0000-00-00",
+            "amount": 1000.0,
+            "current": 3.5,
+        },
+        "payments": [
+            {
+                "type": "deduction",
+                "date-time": "0000-00-00T00:00:00Z",
+                "amount": 100.0,
+                "outstanding": 996.67,
+            },
+            {
+                "type": "interest",
+                "date-time": "0000-01-01T00:00:00Z",
+                "amount": 2.92,
+                "outstanding": 2916.67
+            }
+        ]
+    }
+]
+}
